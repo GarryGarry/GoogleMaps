@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Kendo UI Snippet</title>
+
+    <link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.common.min.css" />
+    <link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.rtl.min.css" />
+    <link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.silver.min.css" />
+    <link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.226/styles/kendo.mobile.all.min.css" />
+    
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #floating-panel {
+            position: absolute;
+
+            top: 10px;
+            left: 25%;
+            z-index: 5;
+            background-color: #fff;
+            padding: 5px;
+            border: 1px solid #999;
+            text-align: center;
+            font-family: 'Roboto','sans-serif';
+            line-height: 30px;
+            padding-left: 10px;
+        }
+
+        #siteaddress {
+            background-color: lightgray;
+            padding: 5px;
+            border: 5px solid black;
+            width: 500px;
+        }
+
+        span.k-widget.k-autocomplete.k-header.k-state-default {
+            width: 500px;
+        }
+
+        button#click {
+            background-color: lightgrey;
+            width: 100px;
+            height: 20px;
+        }
+
+        #details {
+            float: left;
+            height: 100px;
+            width: 200px;
+            background-color:lightgray;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="height:500px; width:800px;">
+                <div id="map" style="height:400px; width:800px;"></div>
+       
+     </div>
+    <div id="right-panel"></div>
+    <div><p id="details">Longitudes and Latitudes</p></div>
+  
+    <button id="coordinates"> Use Current Location</button>
+    <p id="latlng"></p>
+    <input id= "currentLocation" />
+    
+
+  
+    
+    <div id="floating-panel">
+        <input id="start" type="text" />
+        <input id="end"type="text" />
+        <input id="directions" type="button" value="Geocode">
+        <input id="address" type="textbox" value="Enter address"/>
+        <input id="submit" type="button" value="Geocode">
+    </div>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places&sensor=false"></script>
+
+    <script>
+
+
+        $(document).ready(function () {
+
+            var geocoder;
+            var map;
+            var latlong;
+            var myLatlng;
+            var directionsDisplay;
+            var directionsService;
+            var input;
+            var youAreHere;
+          
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(success, error);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+            function error(msg) {
+                alert("couldnt find you your browser settings are off well go back now and check my cv ")
+                console.log(msg);
+            }
+
+            function success(position) {
+
+                   myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                    input = position.coords.latitude +','+ position.coords.longitude;
+                   geocoder = new google.maps.Geocoder;
+          
+            var latlngStr = input.split(',', 2);
+            var latlng = { lat: parseFloat(latlngStr[0]), lng: parseFloat(latlngStr[1]) };
+            geocoder.geocode({ 'location': latlng }, function (results, status) {
+                if (status === google.maps.GeocoderStatus.OK) {
+                    if (results[1]) {
+                        currentAdd = results[1].formatted_address;
+                      
+                             $('#currentLocation').val(currentAdd);
+                              youAreHere= $('#currentLocation').val();
+                                }}
+
+            });
+                   
+                   // console.log(myLatlng);
+                   var mapOptions = {
+                    zoom: 13,
+                    center: myLatlng,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                };
+                map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+                $('#coordinates').on('click', function () {
+                    document.getElementById('details').innerHTML = myLatlng;
+                    var infoWindow = new google.maps.InfoWindow({
+                        position: myLatlng,
+                        centre: myLatlng,
+                        map: map
+                    });
+                    infoWindow.setContent(youAreHere);
+                });
+
+                            var cl = (document.getElementById('address'));
+                        var options = {
+                            componentRestrictions: { country: "nz" }
+                        };
+                        var autocomplete = new google.maps.places.Autocomplete(cl, options);
+                        autocomplete.addListener('place_changed', function () {
+                            var place = autocomplete.getPlace();
+                        });
+
+             geocoder = new google.maps.Geocoder();
+
+                document.getElementById('submit').addEventListener('click', function () {
+                    geocodeAddress(geocoder, map);
+                    function geocodeAddress(geocoder, resultsMap) {
+
+                        var address = document.getElementById('address').value;
+                        
+                        geocoder.geocode({ 'address': address }, function (results, status) {
+                                                
+                             latlong = results[0].geometry.location;
+
+                            document.getElementById('details').innerHTML = latlong;
+                            if (status === google.maps.GeocoderStatus.OK) {
+                                resultsMap.setCenter(results[0].geometry.location);
+                                
+                                var marker = new google.maps.Marker({
+                                    map: resultsMap,
+                                    position: results[0].geometry.location
+
+                                });
+                            } else {
+                                alert('Geocode was not successful for the following reason: ' + status);
+                            }
+                        });
+                    }
+                })
+                 var clStart = (document.getElementById('start'));
+                        var options = {
+                            componentRestrictions: { country: "nz" }
+                        };
+                        var autocomplete = new google.maps.places.Autocomplete(clStart, options);
+                        autocomplete.addListener('place_changed', function () {
+                            var place = autocomplete.getPlace();
+                        });
+                         var clEnd = (document.getElementById('end'));
+                        var options = {
+                            componentRestrictions: { country: "nz" }
+                        };
+                        var autocomplete = new google.maps.places.Autocomplete(clEnd, options);
+                        autocomplete.addListener('place_changed', function () {
+                            var place = autocomplete.getPlace();
+                        });
+                
+                 directionsDisplay = new google.maps.DirectionsRenderer;
+                 directionsService = new google.maps.DirectionsService;
+                 document.getElementById('directions').addEventListener('click', function () {
+                     directionsDisplay.setMap(map);
+                     directionsDisplay.setPanel(document.getElementById('right-panel'));
+                 });
+                     var control = document.getElementById('floating-panel');
+                     control.style.display = 'block';
+                     map.controls[google.maps.ControlPosition.TOP_CENTER].push(control);
+
+                     var onChangeHandler = function () {
+                         calculateAndDisplayRoute(directionsService, directionsDisplay);
+                     };
+                     document.getElementById('start').addEventListener('change', onChangeHandler);
+                     document.getElementById('end').addEventListener('change', onChangeHandler);
+                
+            }
+
+            function calculateAndDisplayRoute(directionsService, directionsDisplay) {
+                
+                           
+       
+                        var start = document.getElementById('start').value;
+
+                           
+                var end = document.getElementById('end').value;
+                directionsService.route({
+                    origin: start,
+                    destination: end,
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, function(response, status) {
+                    if (status === google.maps.DirectionsStatus.OK) {
+                        directionsDisplay.setDirections(response);
+                    } else {
+                        window.alert('Directions request failed due to ' + status);
+                    }
+                });
+            }
+        });
+
+    </script>
+
+</body>
+</html>
